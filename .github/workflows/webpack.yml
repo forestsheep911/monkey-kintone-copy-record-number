@@ -28,7 +28,7 @@ jobs:
           yarn build
 
       - name: Auto build user.js to main branch
-        uses: JamesIves/github-pages-deploy-action@4.3.4
+        uses: JamesIves/github-pages-deploy-action@4.2.5
         with:
           branch: main
           folder: .
