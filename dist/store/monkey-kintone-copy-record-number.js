@@ -6,12 +6,12 @@
 // @author              bxu
 // @copyright           bxu
 // @license             MIT
-// @match               https://*
+// @match               https://*.cybozu.cn
 
-// @run-at              document-start
-// @supportURL          https://yourSupportURL
+// @run-at              document-end
+// @supportURL          https://github.com/forestsheep911/monkey-kintone-copy-record-number/issues
 // @homepage            https://github.com/forestsheep911/monkey-kintone-copy-record-number#readme
-
+// @grant               GM_addStyle
 // @icon                https://img.icons8.com/ios/50/000000/happy-eyes.png
 // ==/UserScript==
 /* eslint-disable */ /* spell-checker: disable */
@@ -26,7 +26,62 @@
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 var app = function () {
-    console.log('monkey jumping on the bed.');
+    GM_addStyle("\n    #myMenu {\n      position: absolute;\n      background-color: #fff;\n      border: 1px solid #ccc;\n      padding: 5px;\n    }\n    \n    #myMenu li {\n      list-style-type: none;\n      padding: 5px;\n    }\n    \n    #myMenu li:hover {\n      background-color: #ccc;\n    }");
+    function addContextMenu(link) {
+        var ul1 = document.createElement('ul');
+        ul1.innerHTML = "<ul id=\"myMenu\" style=\"display:none;\">\n    <li><a href=\"#\">copy</a></li>\n  </ul>";
+        document.body.appendChild(ul1);
+        var menu = document.getElementById('myMenu');
+        if (!link)
+            return;
+        if (!menu)
+            return;
+        link.addEventListener('contextmenu', function (e) {
+            // 阻止默认的上下文菜单
+            e.preventDefault();
+            // 计算菜单的位置并显示出来
+            var ee = e;
+            menu.style.left = ee.pageX + 'px';
+            menu.style.top = ee.pageY + 'px';
+            menu.style.display = 'block';
+        });
+        // 当菜单中的选项被点击时，执行相应的操作
+        menu.addEventListener('click', function (e) {
+            // 阻止链接的默认行为
+            e.preventDefault();
+            // 执行相应的操作
+            console.log('执行操作：' + e.target.innerText);
+            // 隐藏菜单
+            menu.style.display = 'none';
+        });
+    }
+    kintone.events.on('app.record.index.show', function (ke) {
+        // const r1 = ke.recor+ds[0]
+        // console.log(r1)
+        // console.log(ke)
+        for (var _i = 0, _a = ke.records; _i < _a.length; _i++) {
+            var kk = _a[_i];
+            for (var pn in kk) {
+                if (kk[pn].type === 'RECORD_NUMBER') {
+                    console.log(kk[pn].value);
+                }
+            }
+        }
+        var els = document.querySelectorAll('td.recordlist-cell-gaia a.recordlist-show-gaia');
+        // console.log(els)
+        for (var i = 0; i < els.length; i++) {
+            var el = els[i];
+            addContextMenu(el);
+            console.log(els[i]);
+        }
+        // const button = document.createElement('button')
+        // button.innerText = 'CP'
+        // button.classList.add('btn-gradient')
+        // button.classList.add('purple')
+        // button.classList.add('mini')
+        // el?.appendChild(button)
+        // el.style.width = '1000px'
+    });
 };
 exports["default"] = app;
 
