@@ -21,6 +21,7 @@ module.exports = () => {
       inject: 'body',
     }),
   )
+  ;(baseOptions.mode = 'development'), (baseOptions.devtool = 'eval-source-map')
   baseOptions.devServer = {
     static: [
       {
@@ -37,7 +38,6 @@ module.exports = () => {
     liveReload: true,
     watchFiles: ['src/**/*', 'public/**/*'],
   }
-  baseOptions.mode = 'development'
 
   return baseOptions
 }

@@ -1,16 +1,16 @@
 // ==UserScript==
-// @name                monkey
-// @namespace           https://github.com/you/monkey-monkey
+// @name                monkey-kintone-copy-record-number
+// @namespace           https://github.com/bxu/monkey-monkey-kintone-copy-record-number
 // @version             0.0.1
-// @description         write description here
-// @author              you
-// @copyright           you
+// @description         copy record number quickly
+// @author              bxu
+// @copyright           bxu
 // @license             MIT
 // @match               https://*
 
 // @run-at              document-start
 // @supportURL          https://yourSupportURL
-// @homepage            https://github.com/yourname/your-app#readme
+// @homepage            https://github.com/forestsheep911/monkey-kintone-copy-record-number#readme
 
 // @icon                https://img.icons8.com/ios/50/000000/happy-eyes.png
 // ==/UserScript==

@@ -24,7 +24,7 @@
 
 node_modules/
 dist/*.*
-!/dist/[your-app-name].user.js 
+!/dist/store/
 npm-debug.log
 yarn-error.log
 
