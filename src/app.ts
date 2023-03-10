@@ -1,79 +1,103 @@
+import Swal from 'sweetalert2'
 const app = () => {
+  let timer: NodeJS.Timeout
   GM_addStyle(`
-    #myMenu {
-      position: absolute;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 5px;
-    }
-    
-    #myMenu li {
-      list-style-type: none;
-      padding: 5px;
-    }
-    
-    #myMenu li:hover {
-      background-color: #ccc;
-    }`)
+ `)
 
-  function addContextMenu(link: Element) {
-    const ul1 = document.createElement('ul')
-    ul1.innerHTML = `<ul id="myMenu" style="display:none;">
-    <li><a href="#">copy</a></li>
-  </ul>`
-    document.body.appendChild(ul1)
-    const menu = document.getElementById('myMenu')
-    if (!link) return
-    if (!menu) return
-
-    link.addEventListener('contextmenu', (e) => {
-      // 阻止默认的上下文菜单
-      e.preventDefault()
-      // 计算菜单的位置并显示出来
-      const ee = e as MouseEvent
-      menu.style.left = ee.pageX + 'px'
-      menu.style.top = ee.pageY + 'px'
-      menu.style.display = 'block'
-    })
-
-    // 当菜单中的选项被点击时，执行相应的操作
-    menu.addEventListener('click', (e: MouseEvent) => {
-      // 阻止链接的默认行为
-      e.preventDefault()
-      // 执行相应的操作
-      console.log('执行操作：' + (e.target as HTMLElement).innerText)
-
-      // 隐藏菜单
-      menu.style.display = 'none'
+  const showPreCopyDialog = (copyText: string): void => {
+    let timerInterval: NodeJS.Timeout
+    Swal.fire({
+      html: '<b></b>毫秒后自动拷贝!',
+      timer: 700,
+      timerProgressBar: true,
+      position: 'center',
+      didOpen: () => {
+        Swal.showLoading()
+        const b = Swal.getHtmlContainer()?.querySelector('b')
+        timerInterval = setInterval(() => {
+          if (b) {
+            const leftSec = Swal.getTimerLeft() as number
+            b.textContent = leftSec.toString()
+          }
+        }, 50)
+      },
+      willClose: () => {
+        clearInterval(timerInterval)
+      },
+    }).then((result) => {
+      if (result.dismiss === Swal.DismissReason.timer) {
+        doCopy(copyText)
+      }
     })
   }
 
-  kintone.events.on('app.record.index.show', (ke) => {
-    // const r1 = ke.recor+ds[0]
-    // console.log(r1)
-    // console.log(ke)
-
-    for (const kk of ke.records) {
-      for (const pn in kk) {
-        if (kk[pn].type === 'RECORD_NUMBER') {
-          console.log(kk[pn].value)
-        }
-      }
+  const getAppCode = async (): Promise<string | null> => {
+    const params = {
+      id: kintone.app.getId()?.toString(),
     }
+    const appInfo = await kintone.api(kintone.api.url('/k/v1/app.json', true), 'GET', params)
+    if (!appInfo || typeof appInfo !== 'object' || appInfo.code === '') {
+      console.log('app code is not setted')
+      return null
+    }
+    return appInfo.code
+  }
+
+  const addMouseOver = (elementToBind: HTMLElement, appCode: string): void => {
+    const hrefString = elementToBind.getAttribute('href')
+    console.log(elementToBind.getAttribute('href'))
+    const regExpRecordId = /(?<=record=)\d+/
+    const matches = hrefString?.match(regExpRecordId)
+    if (!matches || matches.length !== 1) {
+      return
+    }
+    const appId: string = matches[0]
+    elementToBind.onmouseover = () => {
+      // console.log('hover in')
+      timer = setTimeout(() => {
+        showPreCopyDialog(`${appCode}-${appId}`)
+      }, 800)
+    }
+  }
+
+  const addMouseOut = (elementToBind: HTMLElement): void => {
+    elementToBind.onmouseout = () => {
+      clearTimeout(timer)
+    }
+  }
+
+  const doCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      Swal.fire({
+        text: '拷贝完成',
+        showConfirmButton: false,
+        timer: 400,
+      })
+    } catch (e) {
+      Swal.fire({
+        text: '拷贝失败，拷贝时当前页面必须处于focus状态下',
+        showConfirmButton: false,
+      })
+      console.log(e)
+      console.error('拷贝失败，拷贝时当前页面必须处于focus状态下')
+    }
+  }
+
+  kintone.events.on('app.record.index.show', async (ke) => {
+    const appCode = await getAppCode()
+    if (!appCode) return
     const els = document.querySelectorAll('td.recordlist-cell-gaia a.recordlist-show-gaia')
     // console.log(els)
+    if (els.length < 1) return
     for (let i = 0; i < els.length; i++) {
-      const el = els[i]
-      addContextMenu(el)
-      console.log(els[i])
+      const el = els[i] as HTMLElement
+      console.log(el.title)
+      el.title = `${el.title} \n悬停拷贝记录编号`
+      addMouseOver(el, appCode)
+      addMouseOut(el)
     }
-    // const button = document.createElement('button')
-    // button.innerText = 'CP'
-    // button.classList.add('btn-gradient')
-    // button.classList.add('purple')
-    // button.classList.add('mini')
-    // el?.appendChild(button)
-    // el.style.width = '1000px'
+    return ke
   })
 }
 
