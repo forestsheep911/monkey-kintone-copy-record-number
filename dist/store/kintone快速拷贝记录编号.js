@@ -74,11 +74,29 @@ var sweetalert2_1 = __importDefault(__webpack_require__(873));
 var app = function () {
     var timer;
     GM_addStyle("\n ");
+    var MOUSE_HOLD_TIME = 2500;
+    var COPY_T_MINUS = 1700;
+    var SHOW_COPYED_LENGTH = 800;
+    var NO_FOCUS_ERR_MSG = '拷贝失败，拷贝时当前页面必须处于focus状态下';
+    var COPY_T_MINUS_MSG = '毫秒后自动复制记录编号!';
+    var HOLD_TO_COPY_MSG = '悬停拷贝记录编号';
+    var COPY_OVER_MSG = {
+        setLang: function () {
+            if (navigator.language === 'en-US')
+                return this['en-US'];
+            if (navigator.language === 'zh-CN')
+                return this['zh-CN'];
+            return this['en-US'];
+        },
+        'en-US': 'Copyied',
+        'zh-CN': '复制完成',
+    };
+    console.log(navigator.language);
     var showPreCopyDialog = function (copyText) {
         var timerInterval;
         sweetalert2_1.default.fire({
-            html: '<b></b>毫秒后自动拷贝!',
-            timer: 700,
+            html: "<b></b>".concat(COPY_T_MINUS_MSG),
+            timer: COPY_T_MINUS,
             timerProgressBar: true,
             position: 'center',
             didOpen: function () {
@@ -121,22 +139,30 @@ var app = function () {
             }
         });
     }); };
-    var addMouseOver = function (elementToBind, appCode) {
-        var hrefString = elementToBind.getAttribute('href');
-        console.log(elementToBind.getAttribute('href'));
-        var regExpRecordId = /(?<=record=)\d+/;
-        var matches = hrefString === null || hrefString === void 0 ? void 0 : hrefString.match(regExpRecordId);
-        if (!matches || matches.length !== 1) {
-            return;
+    function addMouseOver(elementToBind, appCode) {
+        if (appCode) {
+            var hrefString = elementToBind.getAttribute('href');
+            var regExpRecordId = /(?<=record=)\d+/;
+            var matches = hrefString === null || hrefString === void 0 ? void 0 : hrefString.match(regExpRecordId);
+            if (!matches || matches.length !== 1) {
+                return;
+            }
+            var appId_1 = matches[0];
+            elementToBind.onmouseover = function () {
+                timer = setTimeout(function () {
+                    showPreCopyDialog("".concat(appCode, "-").concat(appId_1));
+                }, MOUSE_HOLD_TIME);
+            };
         }
-        var appId = matches[0];
-        elementToBind.onmouseover = function () {
-            // console.log('hover in')
-            timer = setTimeout(function () {
-                showPreCopyDialog("".concat(appCode, "-").concat(appId));
-            }, 800);
-        };
-    };
+        else {
+            console.log(elementToBind.innerText);
+            elementToBind.onmouseover = function () {
+                timer = setTimeout(function () {
+                    showPreCopyDialog(elementToBind.innerText);
+                }, MOUSE_HOLD_TIME);
+            };
+        }
+    }
     var addMouseOut = function (elementToBind) {
         elementToBind.onmouseout = function () {
             clearTimeout(timer);
@@ -152,26 +178,26 @@ var app = function () {
                 case 1:
                     _a.sent();
                     sweetalert2_1.default.fire({
-                        text: '拷贝完成',
+                        text: "".concat(COPY_OVER_MSG.setLang()),
                         showConfirmButton: false,
-                        timer: 400,
+                        timer: SHOW_COPYED_LENGTH,
                     });
                     return [3 /*break*/, 3];
                 case 2:
                     e_1 = _a.sent();
                     sweetalert2_1.default.fire({
-                        text: '拷贝失败，拷贝时当前页面必须处于focus状态下',
+                        text: NO_FOCUS_ERR_MSG,
                         showConfirmButton: false,
                     });
                     console.log(e_1);
-                    console.error('拷贝失败，拷贝时当前页面必须处于focus状态下');
+                    console.error(NO_FOCUS_ERR_MSG);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
         });
     }); };
     kintone.events.on('app.record.index.show', function (ke) { return __awaiter(void 0, void 0, void 0, function () {
-        var appCode, els, i, el;
+        var appCode, viewDetailButtonEle, i, el, recordNumberCellEle, i, el;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, getAppCode()];
@@ -179,15 +205,20 @@ var app = function () {
                     appCode = _a.sent();
                     if (!appCode)
                         return [2 /*return*/];
-                    els = document.querySelectorAll('td.recordlist-cell-gaia a.recordlist-show-gaia');
-                    // console.log(els)
-                    if (els.length < 1)
+                    viewDetailButtonEle = document.querySelectorAll('td.recordlist-cell-gaia a.recordlist-show-gaia');
+                    if (viewDetailButtonEle.length < 1)
                         return [2 /*return*/];
-                    for (i = 0; i < els.length; i++) {
-                        el = els[i];
+                    for (i = 0; i < viewDetailButtonEle.length; i++) {
+                        el = viewDetailButtonEle[i];
                         console.log(el.title);
-                        el.title = "".concat(el.title, " \n\u60AC\u505C\u62F7\u8D1D\u8BB0\u5F55\u7F16\u53F7");
+                        el.title = "".concat(el.title, " \n").concat(HOLD_TO_COPY_MSG);
                         addMouseOver(el, appCode);
+                        addMouseOut(el);
+                    }
+                    recordNumberCellEle = document.querySelectorAll('td.recordlist-cell-gaia.recordlist-record_id-gaia');
+                    for (i = 0; i < recordNumberCellEle.length; i++) {
+                        el = recordNumberCellEle[i];
+                        addMouseOver(el);
                         addMouseOut(el);
                     }
                     return [2 /*return*/, ke];
